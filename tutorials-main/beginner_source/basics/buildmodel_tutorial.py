@@ -12,13 +12,11 @@
 Build the Neural Network
 ===================
 
-Neural networks comprise of layers/modules that perform operations on data.
-The `torch.nn <https://pytorch.org/docs/stable/nn.html>`_ namespace provides all the building blocks you need to
-build your own neural network. Every module in PyTorch subclasses the `nn.Module <https://pytorch.org/docs/stable/generated/torch.nn.Module.html>`_.
-A neural network is a module itself that consists of other modules (layers). This nested structure allows for
-building and managing complex architectures easily.
+神经网络由对数据进行操作的层/模块组成。
+ `torch.nn <https://pytorch.org/docs/stable/nn.html>`_ 命名空间提供了您构建自己的神经网络所需的所有构建模块。 PyTorch中的每个模块都继承了 nn.Module `nn.Module <https://pytorch.org/docs/stable/generated/torch.nn.Module.html>`_.
+一个神经网络本身就是一个由其他模块（层）组成的模块。这种嵌套结构允许轻松构建和管理复杂的架构。
 
-In the following sections, we'll build a neural network to classify images in the FashionMNIST dataset.
+在下面的章节中，我们将建立一个神经网络来对FashionMNIST数据集中的图像进行分类。
 
 """
 
@@ -30,11 +28,11 @@ from torchvision import datasets, transforms
 
 
 #############################################
-# Get Device for Training
+# 获取训练设备
 # -----------------------
-# We want to be able to train our model on a hardware accelerator like the GPU or MPS,
-# if available. Let's check to see if `torch.cuda <https://pytorch.org/docs/stable/notes/cuda.html>`_
-# or `torch.backends.mps <https://pytorch.org/docs/stable/notes/mps.html>`_ are available, otherwise we use the CPU.
+# 我们希望能够在GPU或MPS等硬件加速器上训练我们的模型，
+# 如果可以使用的话，让我们检查一下 `torch.cuda <https://pytorch.org/docs/stable/notes/cuda.html>`_
+# 或者 `torch.backends.mps <https://pytorch.org/docs/stable/notes/mps.html>`_ 是否是可用的，否则我们使用CPU。
 
 device = (
     "cuda"
@@ -46,11 +44,10 @@ device = (
 print(f"Using {device} device")
 
 ##############################################
-# Define the Class
+# 定义网络结构类
 # -------------------------
-# We define our neural network by subclassing ``nn.Module``, and
-# initialize the neural network layers in ``__init__``. Every ``nn.Module`` subclass implements
-# the operations on input data in the ``forward`` method.
+# We define our neural network by subclassing 我们定义我们的神经网络继承于 ``nn.Module``, 并且
+# 初始化神经网络层使用 ``__init__``方法。 每个 ``nn.Module`` 都在 ``forward`` 方法中实现对输入数据的操作
 
 class NeuralNetwork(nn.Module):
     def __init__(self):
@@ -70,20 +67,20 @@ class NeuralNetwork(nn.Module):
         return logits
 
 ##############################################
-# We create an instance of ``NeuralNetwork``, and move it to the ``device``, and print
-# its structure.
+# 我们创建一个 ``NeuralNetwork`` 的实例, 然后将其移动到 ``device`` 上， 并打印
+# 其结构。
 
 model = NeuralNetwork().to(device)
 print(model)
 
 
 ##############################################
-# To use the model, we pass it the input data. This executes the model's ``forward``,
-# along with some `background operations <https://github.com/pytorch/pytorch/blob/270111b7b611d174967ed204776985cefca9c144/torch/nn/modules/module.py#L866>`_.
-# Do not call ``model.forward()`` directly!
+# 为了使用这个模型，我们把输入数据传给它。这就执行了模型的 ``forward``方法,
+# 以及一些 `background operations <https://github.com/pytorch/pytorch/blob/270111b7b611d174967ed204776985cefca9c144/torch/nn/modules/module.py#L866>`_.
+# 不要直接调用 ``model.forward()`` ！
 #
-# Calling the model on the input returns a 2-dimensional tensor with dim=0 corresponding to each output of 10 raw predicted values for each class, and dim=1 corresponding to the individual values of each output.
-# We get the prediction probabilities by passing it through an instance of the ``nn.Softmax`` module.
+# 在这个输入上调用模型会返回一个二维张量，维度为0的数值对应于每个类的10个原始预测值的每个输出，维度为1的数值对应于每个输出的单个值。
+# 我们通过``nn.Softmax`` 模块的一个实例来获得预测概率。
 
 X = torch.rand(1, 28, 28, device=device)
 logits = model(X)
@@ -98,12 +95,12 @@ print(f"Predicted class: {y_pred}")
 
 
 ##############################################
-# Model Layers
+# 模型层
 # -------------------------
 #
-# Let's break down the layers in the FashionMNIST model. To illustrate it, we
-# will take a sample minibatch of 3 images of size 28x28 and see what happens to it as
-# we pass it through the network.
+# 让我们来分解FashionMNIST模型中的各个层次。为了说明它，我们
+# 将采取一个由3张大小为28x28的图像组成的样本小批看看发生了什么 当
+# 我们把它通过网络时
 
 input_image = torch.rand(3,28,28)
 print(input_image.size())
@@ -111,9 +108,9 @@ print(input_image.size())
 ##################################################
 # nn.Flatten
 # ^^^^^^^^^^^^^^^^^^^^^^
-# We initialize the `nn.Flatten  <https://pytorch.org/docs/stable/generated/torch.nn.Flatten.html>`_
-# layer to convert each 2D 28x28 image into a contiguous array of 784 pixel values (
-# the minibatch dimension (at dim=0) is maintained).
+# 我们初始化 `nn.Flatten  <https://pytorch.org/docs/stable/generated/torch.nn.Flatten.html>`_
+# 层去转换每个2D的28*28的图片为一个包含784个像素值的连续数组  (
+# 小批量维度 (维度=0)保持原来的数值).
 
 flatten = nn.Flatten()
 flat_image = flatten(input_image)
@@ -122,8 +119,8 @@ print(flat_image.size())
 ##############################################
 # nn.Linear
 # ^^^^^^^^^^^^^^^^^^^^^^
-# The `linear layer <https://pytorch.org/docs/stable/generated/torch.nn.Linear.html>`_
-# is a module that applies a linear transformation on the input using its stored weights and biases.
+# `linear layer <https://pytorch.org/docs/stable/generated/torch.nn.Linear.html>`_
+# 是一个使用其存储的权重和偏置，对输入进行线性转换的模块。
 #
 layer1 = nn.Linear(in_features=28*28, out_features=20)
 hidden1 = layer1(flat_image)
@@ -133,12 +130,12 @@ print(hidden1.size())
 #################################################
 # nn.ReLU
 # ^^^^^^^^^^^^^^^^^^^^^^
-# Non-linear activations are what create the complex mappings between the model's inputs and outputs.
-# They are applied after linear transformations to introduce *nonlinearity*, helping neural networks
-# learn a wide variety of phenomena.
+# 非线性激活是在模型的输入和输出之间建立复杂的映射关系。
+# 它们被应用在线性变换之后，以引入非线性，帮助神经网络
+# 学习各种各样的现象。
 #
-# In this model, we use `nn.ReLU <https://pytorch.org/docs/stable/generated/torch.nn.ReLU.html>`_ between our
-# linear layers, but there's other activations to introduce non-linearity in your model.
+# 在这个模型中, 我们使用 `nn.ReLU <https://pytorch.org/docs/stable/generated/torch.nn.ReLU.html>`_ 在我们的
+# 线性层，但还有其他的激活方式可以在你的模型中引入非线性。
 
 print(f"Before ReLU: {hidden1}\n\n")
 hidden1 = nn.ReLU()(hidden1)
@@ -149,9 +146,9 @@ print(f"After ReLU: {hidden1}")
 #################################################
 # nn.Sequential
 # ^^^^^^^^^^^^^^^^^^^^^^
-# `nn.Sequential <https://pytorch.org/docs/stable/generated/torch.nn.Sequential.html>`_ is an ordered
-# container of modules. The data is passed through all the modules in the same order as defined. You can use
-# sequential containers to put together a quick network like ``seq_modules``.
+# `nn.Sequential <https://pytorch.org/docs/stable/generated/torch.nn.Sequential.html>`_ 是一个包含多个模块的有序容器
+#  数据通过所有的模块按照定义好的顺序。你可以使用
+# 序列容器来拼凑一个快速的网络，例如 ``seq_modules``.
 
 seq_modules = nn.Sequential(
     flatten,
@@ -165,24 +162,23 @@ logits = seq_modules(input_image)
 ################################################################
 # nn.Softmax
 # ^^^^^^^^^^^^^^^^^^^^^^
-# The last linear layer of the neural network returns `logits` - raw values in [-\infty, \infty] - which are passed to the
-# `nn.Softmax <https://pytorch.org/docs/stable/generated/torch.nn.Softmax.html>`_ module. The logits are scaled to values
-# [0, 1] representing the model's predicted probabilities for each class. ``dim`` parameter indicates the dimension along
-# which the values must sum to 1.
+# 神经网络的最后一个线性层返回 `logits` - 原始数值在 [-\负无穷, \无穷] 里- 这将传递给
+# `nn.Softmax <https://pytorch.org/docs/stable/generated/torch.nn.Softmax.html>`_ 模块。结果被缩放为数值
+# [0, 1] 表示模型对于每个类的预测概率。 ``dim``这个参数表示的维度，沿该维度的数值必须和为1。
 
 softmax = nn.Softmax(dim=1)
 pred_probab = softmax(logits)
 
 
 #################################################
-# Model Parameters
+# 模型参数
 # -------------------------
-# Many layers inside a neural network are *parameterized*, i.e. have associated weights
-# and biases that are optimized during training. Subclassing ``nn.Module`` automatically
-# tracks all fields defined inside your model object, and makes all parameters
-# accessible using your model's ``parameters()`` or ``named_parameters()`` methods.
+# 神经网络内部的许多层都是参数化的，即有相关的权重和偏差，在训练过程中被优化。
+#  自动继承``nn.Module`` 类。
+# 追踪你的模型对象中定义的所有字段，并使所有的参数
+# 是可获得的 ，使用模型的 ``parameters()``方法或者 ``named_parameters()`` 方法。
 #
-# In this example, we iterate over each parameter, and print its size and a preview of its values.
+# 在这个例子中， 我们遍历每个参数，并打印其大小和预览其值。
 #
 
 
@@ -196,6 +192,6 @@ for name, param in model.named_parameters():
 #
 
 #################################################################
-# Further Reading
+# 更多阅读
 # --------------
 # - `torch.nn API <https://pytorch.org/docs/stable/nn.html>`_
