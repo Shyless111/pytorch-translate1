@@ -37,7 +37,7 @@ loss = torch.nn.functional.binary_cross_entropy_with_logits(z, y)
 #
 # 这段代码定义了以下 **计算图**:
 #
-# .. 特征e:: /_static/img/basics/comp-graph.png
+# .. 图像特征:: /_static/img/basics/comp-graph.png
 #    :alt:
 #
 # 在这个网络中，``w`` 和 ``b`` 是参数，我们需要进行
@@ -55,8 +55,8 @@ loss = torch.nn.functional.binary_cross_entropy_with_logits(z, y)
 # 在 *forward* 方向上计算该函数， 并且知道如何在
 # 整个 *backward propagation* 步骤中计算其导数. 对
 # 后向传播函数的参考被存储在一个张量的 ``grad_fn`` 属性中。
-#  你能找到更多关于 ``Function``的信息 `在
-# 文档中 <https://pytorch.org/docs/stable/autograd.html#function>`__.
+#  你能找到更多关于 ``Function``的信息通过查阅
+# 文档 <https://pytorch.org/docs/stable/autograd.html#function>`__.
 #
 
 print(f"Gradient function for z = {z.grad_fn}")
@@ -68,7 +68,7 @@ print(f"Gradient function for loss = {loss.grad_fn}")
 #
 # 在神经网络中为了优化参数的权重，我们需要
 # 计算我们的损失函数对于参数的导数，
-# 也就是说，我们需要 :math:`\frac{\partial loss}{\partial w}` 和
+# 也就是说，我们需要求出:math:`\frac{\partial loss}{\partial w}` 和
 # :math:`\frac{\partial loss}{\partial b}` 在
 # ``x`` 和 ``y`` 的一些固定值下。为了计算导数， 我们称之为
 # ``loss.backward()``， 然后再从``w.grad`` 和 ``b.grad`` 中获取数值 :
@@ -81,14 +81,14 @@ print(b.grad)
 
 ######################################################################
 # .. 笔记::
-#   - 我们只能获得计算图叶子节点的 ``grad`` 属性
-#     这些节点 ``requires_grad`` 属性
-#     设置为 ``True``。 对于所有计算图中的其他节点， 梯度将是
-#     不好获取的。
+#   - 我们只能获得计算图叶子节点的 ``grad`` 属性，
+#     这些节点的``requires_grad`` 属性
+#     设置为 ``True``。 对于计算图中的其他节点， 梯度将是
+#     不可获取的。
 #   - 我们只能使用
 #     ``backward`` 在给定的图像上进行一次梯度计算，出于性能的原因，如果我们需要
-#     在同一图像上做进行多次 ``backward`` 操作，我们需要去
-#     ``retain_graph=True`` 给``backward`` 的调用。
+#     在同一图像上做进行多次 ``backward`` 操作，我们需要设置
+#     ``retain_graph=True`` 在``backward`` 调用时。
 #
 
 
