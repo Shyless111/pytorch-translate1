@@ -1,13 +1,13 @@
 """
-`Learn the Basics <intro.html>`_ ||
-`Quickstart <quickstart_tutorial.html>`_ ||
-`Tensors <tensorqs_tutorial.html>`_ ||
-`Datasets & DataLoaders <data_tutorial.html>`_ ||
-`Transforms <transforms_tutorial.html>`_ ||
-**Build Model** ||
-`Autograd <autogradqs_tutorial.html>`_ ||
-`Optimization <optimization_tutorial.html>`_ ||
-`Save & Load Model <saveloadrun_tutorial.html>`_
+`学习基础知识 <intro.html>`_ ||
+`快速开始 <quickstart_tutorial.html>`_ ||
+`张量 <tensorqs_tutorial.html>`_ ||
+`数据集和数据加载器 <data_tutorial.html>`_ ||
+`变换  <transforms_tutorial.html>`_ ||
+**创建模型** ||
+`自动求导 <autogradqs_tutorial.html>`_ ||
+`优化 <optimization_tutorial.html>`_ ||
+`保存和加载模型 <saveloadrun_tutorial.html>`_
 
 构建神经网络
 ===================
@@ -30,7 +30,7 @@ from torchvision import datasets, transforms
 #############################################
 # 获取训练设备
 # -----------------------
-# 我们希望能够在GPU或MPS等硬件加速器上训练我们的模型，
+# 我们希望能够在GPU或MPS等硬件加速器上训练我们的模型。
 # 如果可以使用的话，让我们检查一下 `torch.cuda <https://pytorch.org/docs/stable/notes/cuda.html>`_
 # 或者 `torch.backends.mps <https://pytorch.org/docs/stable/notes/mps.html>`_ 是否是可用的，否则我们使用CPU。
 
@@ -46,8 +46,8 @@ print(f"Using {device} device")
 ##############################################
 # 定义网络结构类
 # -------------------------
-# 我们定义我们的神经网络继承 ``nn.Module``, 并且
-# 初始化神经网络层使用 ``__init__``方法。 每个 ``nn.Module`` 都在 ``forward`` 方法中实现对输入数据的操作
+# 我们通过继承 ``nn.Module``来创建神经网络, 并且使用 ``__init__``方法
+# 初始化神经网络层。 每个 ``nn.Module`` 都在 ``forward`` 方法中实现对输入数据的操作。
 
 class NeuralNetwork(nn.Module):
     def __init__(self):
@@ -79,7 +79,7 @@ print(model)
 # 以及一些 `background operations <https://github.com/pytorch/pytorch/blob/270111b7b611d174967ed204776985cefca9c144/torch/nn/modules/module.py#L866>`_.
 # 不要直接调用 ``model.forward()`` ！
 #
-# 在这个输入上调用模型会返回一个二维张量，维度为0的数值对应于每个类的10个原始预测值的每个输出，维度为1的数值对应于每个输出的单个值。
+# 在这个输入上调用模型会返回一个二维张量，维度为0的数值对应于每个类的10个原始预测值的每个输出，维度为1的数值对应于每个输出的单个数值。
 # 我们通过``nn.Softmax`` 模块的一个实例来获得预测概率。
 
 X = torch.rand(1, 28, 28, device=device)
@@ -99,7 +99,7 @@ print(f"Predicted class: {y_pred}")
 # -------------------------
 #
 # 让我们来分解FashionMNIST模型中的各个层次。为了说明它，我们
-# 将采取一个由3张大小为28x28的图像组成的样本小批看看发生了什么 当
+# 将采取一个由3张大小为28x28的图像组成的样本小批量看看发生了什么 当
 # 我们把它通过网络时
 
 input_image = torch.rand(3,28,28)
@@ -163,8 +163,8 @@ logits = seq_modules(input_image)
 # nn.Softmax
 # ^^^^^^^^^^^^^^^^^^^^^^
 # 神经网络的最后一个线性层返回 `logits` - 原始数值在 [-\负无穷, \无穷] 里- 这将传递给
-# `nn.Softmax <https://pytorch.org/docs/stable/generated/torch.nn.Softmax.html>`_ 模块。结果被缩放为数值
-# [0, 1] 表示模型对于每个类的预测概率。 ``dim``这个参数表示的维度，沿该维度的数值必须和为1。
+# `nn.Softmax <https://pytorch.org/docs/stable/generated/torch.nn.Softmax.html>`_ 模块。结果被缩放到数值
+# [0, 1] 之间表示模型对于每个类的预测概率。 ``dim``这个参数表示维度的数值必须和为1。
 
 softmax = nn.Softmax(dim=1)
 pred_probab = softmax(logits)
