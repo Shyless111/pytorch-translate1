@@ -9,7 +9,7 @@
 `Optimization <optimization_tutorial.html>`_ ||
 `Save & Load Model <saveloadrun_tutorial.html>`_
 
-Build the Neural Network
+构建神经网络
 ===================
 
 神经网络由对数据进行操作的层/模块组成。
@@ -46,7 +46,7 @@ print(f"Using {device} device")
 ##############################################
 # 定义网络结构类
 # -------------------------
-# We define our neural network by subclassing 我们定义我们的神经网络继承于 ``nn.Module``, 并且
+# 我们定义我们的神经网络继承 ``nn.Module``, 并且
 # 初始化神经网络层使用 ``__init__``方法。 每个 ``nn.Module`` 都在 ``forward`` 方法中实现对输入数据的操作
 
 class NeuralNetwork(nn.Module):
@@ -174,7 +174,7 @@ pred_probab = softmax(logits)
 # 模型参数
 # -------------------------
 # 神经网络内部的许多层都是参数化的，即有相关的权重和偏差，在训练过程中被优化。
-#  自动继承``nn.Module`` 类。
+# 自动继承``nn.Module`` 类。
 # 追踪你的模型对象中定义的所有字段，并使所有的参数
 # 是可获得的 ，使用模型的 ``parameters()``方法或者 ``named_parameters()`` 方法。
 #
