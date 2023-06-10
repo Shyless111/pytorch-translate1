@@ -18,20 +18,14 @@ Follow along with the video below or on `youtube <https://www.youtube.com/watch?
      <iframe width="560" height="315" src="https://www.youtube.com/embed/M0fX15_-xrY" frameborder="0" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
    </div>
 
-PyTorch’s *Autograd* feature is part of what make PyTorch flexible and
-fast for building machine learning projects. It allows for the rapid and
-easy computation of multiple partial derivatives (also referred to as
-*gradients)* over a complex computation. This operation is central to
-backpropagation-based neural network learning.
+PyTorch的 *自动求导* 功能是PyTorch在构建机器学习项目时灵活、快速的原因之一。
+它允许在一个复杂的计算中快速和便捷地计算多个偏导数(也被称为 *梯度*) 。
+这种操作是基于反向传播的神经网络学习的核心。
 
-The power of autograd comes from the fact that it traces your
-computation dynamically *at runtime,* meaning that if your model has
-decision branches, or loops whose lengths are not known until runtime,
-the computation will still be traced correctly, and you’ll get correct
-gradients to drive learning. This, combined with the fact that your
-models are built in Python, offers far more flexibility than frameworks
-that rely on static analysis of a more rigidly-structured model for
-computing gradients.
+自动求导的强大之处在于它在运行时动态追踪你的计算，这意味着如果你的模型有决策分支，
+或者在运行时才知道其长度的循环，计算仍然会被正确追踪，你会得到正确的梯度来驱动学习。
+这一点，再加上你的模型是用Python构建的，比那些依靠静态分析更严格的结构化模型来计算梯度的框架要灵活的多。
+
 
 What Do We Need Autograd For?
 -----------------------------
@@ -39,76 +33,45 @@ What Do We Need Autograd For?
 """
 
 ###########################################################################
-# A machine learning model is a *function*, with inputs and outputs. For
-# this discussion, we’ll treat the inputs as an *i*-dimensional vector
-# :math:`\vec{x}`, with elements :math:`x_{i}`. We can then express the
-# model, *M*, as a vector-valued function of the input: :math:`\vec{y} =
-# \vec{M}(\vec{x})`. (We treat the value of M’s output as
-# a vector because in general, a model may have any number of outputs.)
+# 一个机器学习的模型就是一个带有输入和输出的 *函数* 。在这一节的讨论中，我们把带有 :math:`x_{i}`元素的一个 *i* 维向量 ath:`\vec{x}` 作为输入。
+# 然后，我们可以将模型 *M* 表示为输入的矢量值函数：:math:`\vec{y} =\vec{M}(\vec{x})` ，  。
+# （我们把M的输出值当作一个向量，因为一般来说，一个模型可以有任何数量的输出。）
 #
-# Since we’ll mostly be discussing autograd in the context of training,
-# our output of interest will be the model’s loss. The *loss function*
-# L(:math:`\vec{y}`) = L(:math:`\vec{M}`\ (:math:`\vec{x}`)) is a
-# single-valued scalar function of the model’s output. This function
-# expresses how far off our model’s prediction was from a particular
-# input’s *ideal* output. *Note: After this point, we will often omit the
-# vector sign where it should be contextually clear - e.g.,* :math:`y`
-# instead of :math:`\vec y`.
+# 由于我们主要是在训练的背景下讨论自动求导，我们感兴趣的输出将是模型的损失。
+# *损失函数* L(:math:`\vec{y}`) = L(:math:`\vec{M}`\ (:math:`\vec{x}`)) 是一个模型输出单值的标量函数。
+# 这个函数表示我们的模型预测与某一特定输入的 *理想* 输出有多大的偏差。
+# *Note：在这之后，我们通常会在上下文明确的省略矢量符号--例如，* :math:`y` instead of :math:`\vec y`.
 #
-# In training a model, we want to minimize the loss. In the idealized case
-# of a perfect model, that means adjusting its learning weights - that is,
-# the adjustable parameters of the function - such that loss is zero for
-# all inputs. In the real world, it means an iterative process of nudging
-# the learning weights until we see that we get a tolerable loss for a
-# wide variety of inputs.
+# 在训练一个模型时，我们要使损失最小化。在理想化的完美模型的情况下，这意味着调整其学习权重--也就是函数的可调参数--使所有输入的损失为零。
+# 在现实世界中，这意味着一个反复调整学习权重的过程，直到我们看到模型在各种输入下都可以得到一个可容忍的损失。
 #
-# How do we decide how far and in which direction to nudge the weights? We
-# want to *minimize* the loss, which means making its first derivative
-# with respect to the input equal to 0:
-# :math:`\frac{\partial L}{\partial x} = 0`.
+# 我们如何确定在多大程度上和哪个方向上推动权重？我们想使损失 *最小化* ，这意味着使其相对于输入的第一次导数等于0： :math:`\frac{\partial L}{\partial x} = 0`。.
 #
-# Recall, though, that the loss is not *directly* derived from the input,
-# but a function of the model’s output (which is a function of the input
-# directly), :math:`\frac{\partial L}{\partial x}` =
-# :math:`\frac{\partial {L({\vec y})}}{\partial x}`. By the chain rule of
-# differential calculus, we have
+# 不过，回顾一下，损失不是 *直接* 来自输入，而是模型输出的一个函数（是输入的一个函数），
+# :math:`\frac{\partial L}{\partial x}` = :math:`\frac{\partial {L({\vec y})}}{\partial x}`。
+# 根据链式求导法则，我们有
 # :math:`\frac{\partial {L({\vec y})}}{\partial x}` =
 # :math:`\frac{\partial L}{\partial y}\frac{\partial y}{\partial x}` =
-# :math:`\frac{\partial L}{\partial y}\frac{\partial M(x)}{\partial x}`.
+# :math:`\frac{\partial L}{\partial y}\frac{\partial M(x)}{\partial x}`。.
 #
-# :math:`\frac{\partial M(x)}{\partial x}` is where things get complex.
-# The partial derivatives of the model’s outputs with respect to its
-# inputs, if we were to expand the expression using the chain rule again,
-# would involve many local partial derivatives over every multiplied
-# learning weight, every activation function, and every other mathematical
-# transformation in the model. The full expression for each such partial
-# derivative is the sum of the products of the local gradient of *every
-# possible path* through the computation graph that ends with the variable
-# whose gradient we are trying to measure.
+# :math:`\frac{\partial M(x)}{\partial x}` 是事情变复杂的地方。
+# 模型输出的偏导数与它的输入有关，如果我们再次使用链式法则扩展表达式，
+# 这将涉及到对每一个乘法学习权重、每一个激活函数和模型中每一个其他数学变换的许多局部偏导。
+# 每个这样的偏导的完整表达式是通过计算图的 *每个可能路径* 的局部梯度的乘积之和，这些路径的终点是我们试图计算其梯度的变量。
+
 #
-# In particular, the gradients over the learning weights are of interest
-# to us - they tell us *what direction to change each weight* to get the
-# loss function closer to zero.
+# 特别地，我们感兴趣的是学习权重的梯度，它们告诉我们每个权重向 *什么方向改变* 来使损失趋近于0。
 #
-# Since the number of such local derivatives (each corresponding to a
-# separate path through the model’s computation graph) will tend to go up
-# exponentially with the depth of a neural network, so does the complexity
-# in computing them. This is where autograd comes in: It tracks the
-# history of every computation. Every computed tensor in your PyTorch
-# model carries a history of its input tensors and the function used to
-# create it. Combined with the fact that PyTorch functions meant to act on
-# tensors each have a built-in implementation for computing their own
-# derivatives, this greatly speeds the computation of the local
-# derivatives needed for learning.
+# 由于局部导数（每一个都相对于模型计算图的一个单独路径）的数量将会随着神经网络的深度呈指数级增长，它们计算的复杂度也是如此。
+# 这就是自动求导介入的地方，它会追踪每一个计算的历史。PyTorch模型中的每个计算张量都带有其输入张量和用于创建张量的函数的历史。
+# 再加上旨在作用于张量的PyTorch函数都有一个内置的实现来计算自己的导数，这大大加快了学习所需的局部导数的计算。
 #
 # A Simple Example
 # ----------------
 #
-# That was a lot of theory - but what does it look like to use autograd in
-# practice?
+#上面是一些理论，但是在实践中使用自动求导是什么样的呢？
 #
-# Let’s start with a straightforward example. First, we’ll do some imports
-# to let us graph our results:
+# 让我们通过一个简单的样例看看。首先，我们要做一些导入，让我们把结果以图的形式展示出来：
 #
 
 # %matplotlib inline
@@ -121,12 +84,9 @@ import math
 
 
 #########################################################################
-# Next, we’ll create an input tensor full of evenly spaced values on the
-# interval :math:`[0, 2{\pi}]`, and specify ``requires_grad=True``. (Like
-# most functions that create tensors, ``torch.linspace()`` accepts an
-# optional ``requires_grad`` option.) Setting this flag means that in
-# every computation that follows, autograd will be accumulating the
-# history of the computation in the output tensors of that computation.
+# 接下来，我们将创建一个输入张量，该张量填充在区间 :math:`[0, 2{\pi}]` 内均匀分布的数值，并指定 ``requires_grad=True`` 。
+#（和大多数创建张量的函数一样，``torch.linspace()`` 接受一个可选的 ``requires_grad`` 选项）。
+# 设置这个标志意味着在接下来的每一次计算中，autograd将在该计算的输出张量中积累计算的历史。
 # 
 
 a = torch.linspace(0., 2. * math.pi, steps=25, requires_grad=True)
@@ -134,8 +94,8 @@ print(a)
 
 
 ########################################################################
-# Next, we’ll perform a computation, and plot its output in terms of its
-# inputs:
+# 接下来，我们将进行一次计算，并根据其输入绘制其输出：
+# 输入:
 # 
 
 b = torch.sin(a)
@@ -143,19 +103,15 @@ plt.plot(a.detach(), b.detach())
 
 
 ########################################################################
-# Let’s have a closer look at the tensor ``b``. When we print it, we see
-# an indicator that it is tracking its computation history:
+# 我们再仔细的看一下张量 ``b``。当我们打印它，我们看到了一个指标，它正在跟踪其计算历史：
 # 
 
 print(b)
 
 
 #######################################################################
-# This ``grad_fn`` gives us a hint that when we execute the
-# backpropagation step and compute gradients, we’ll need to compute the
-# derivative of :math:`\sin(x)` for all this tensor’s inputs.
-# 
-# Let’s perform some more computations:
+# 这个 ``grad_fn`` 给了我们一个提示，当我们执行反向传播步骤并计算梯度时，我们需要为这个张量的所有输入计算 :math:`\sin(x)` 的梯度。
+# 让我们再进行一些计算：
 # 
 
 c = 2 * b
@@ -166,10 +122,8 @@ print(d)
 
 
 ##########################################################################
-# Finally, let’s compute a single-element output. When you call
-# ``.backward()`` on a tensor with no arguments, it expects the calling
-# tensor to contain only a single element, as is the case when computing a
-# loss function.
+# 最后，让我们来计算一个单个元素的输出。
+# 当你在一个没有参数的张量上调用 ``.backward()`` 时，它希望调用的张量只包含一个元素，就像计算损失函数时的情况。
 # 
 
 out = d.sum()
@@ -177,12 +131,9 @@ print(out)
 
 
 ##########################################################################
-# Each ``grad_fn`` stored with our tensors allows you to walk the
-# computation all the way back to its inputs with its ``next_functions``
-# property. We can see below that drilling down on this property on ``d``
-# shows us the gradient functions for all the prior tensors. Note that
-# ``a.grad_fn`` is reported as ``None``, indicating that this was an input
-# to the function with no history of its own.
+#与我们的张量一起存储的每个 ``grad_fn`` 允许你通过其 ``next_functions`` 属性将计算一直追溯到其输入。
+# 我们可以看到，在 ``d`` 的这个属性上往下追溯，可以看到所有先前的张量的梯度函数。
+# 请注意，``a.grad_fn`` 被报告为 ``None`` ，表明这是一个没有历史的函数的输入。
 # 
 
 print('d:')
@@ -200,9 +151,7 @@ print(a.grad_fn)
 
 
 ######################################################################
-# With all this machinery in place, how do we get derivatives out? You
-# call the ``backward()`` method on the output, and check the input’s
-# ``grad`` property to inspect the gradients:
+#有了所有这些机制，我们如何获得导数呢？我们可以在输出上调用 ``backward()`` 方法，并检查输入的 ```grad`` 属性以检查梯度：
 # 
 
 out.backward()
@@ -211,7 +160,7 @@ plt.plot(a.detach(), a.grad.detach())
 
 
 #########################################################################
-# Recall the computation steps we took to get here:
+# 回忆一下我们走到这里的计算步骤：
 # 
 # ::
 # 
@@ -220,24 +169,18 @@ plt.plot(a.detach(), a.grad.detach())
 #    c = 2 * b
 #    d = c + 1
 #    out = d.sum()
-# 
-# Adding a constant, as we did to compute ``d``, does not change the
-# derivative. That leaves :math:`c = 2 * b = 2 * \sin(a)`, the derivative
-# of which should be :math:`2 * \cos(a)`. Looking at the graph above,
-# that’s just what we see.
-# 
-# Be aware that only *leaf nodes* of the computation have their gradients
-# computed. If you tried, for example, ``print(c.grad)`` you’d get back
-# ``None``. In this simple example, only the input is a leaf node, so only
-# it has gradients computed.
+#
+# 添加一个常数，就像我们计算 ``d`` 那样，并不改变导数。这样，:math:`c = 2 * b = 2 * \sin(a)`，其导数应该是 :math:`2 * \cos(a)`。
+# 看一下上面的图，这就是我们看到的情况。
+#
+# 请注意，只有计算的 *叶子节点* 才会计算它们的梯度。如果你尝试 ``print(c.grad)`` 你会得到 ``None``。
+# 在这个简单的例子中，只有输入是一个叶子节点，所以只有它有梯度计算。
 # 
 # Autograd in Training
 # --------------------
-# 
-# We’ve had a brief look at how autograd works, but how does it look when
-# it’s used for its intended purpose? Let’s define a small model and
-# examine how it changes after a single training batch. First, define a
-# few constants, our model, and some stand-ins for inputs and outputs:
+#
+# 我们已经简单了解了autograd的工作原理，但当它被用于预定的目的时，它看起来如何？
+# 让我们定义一个小模型，并检查它在一个训练批次后的变化。首先，定义几个常量，我们的模型，以及一些输入和输出的替代：
 # 
 
 BATCH_SIZE = 16
@@ -267,13 +210,10 @@ model = TinyModel()
 
 
 ##########################################################################
-# One thing you might notice is that we never specify
-# ``requires_grad=True`` for the model’s layers. Within a subclass of
-# ``torch.nn.Module``, it’s assumed that we want to track gradients on the
-# layers’ weights for learning.
-# 
-# If we look at the layers of the model, we can examine the values of the
-# weights, and verify that no gradients have been computed yet:
+#你可能会注意到一件事，我们从未为模型的层指定 ``requires_grad=True``。
+# 在 ``torch.nn.Module`` 的子类中，我们假定要跟踪各层权重的梯度进行学习。
+#
+#如果我们看一下模型的层，我们可以检查权重的值，并验证是否进行了梯度计算：
 # 
 
 print(model.layer2.weight[0][0:10]) # just a small slice
@@ -281,10 +221,8 @@ print(model.layer2.weight.grad)
 
 
 ##########################################################################
-# Let’s see how this changes when we run through one training batch. For a
-# loss function, we’ll just use the square of the Euclidean distance
-# between our ``prediction`` and the ``ideal_output``, and we’ll use a
-# basic stochastic gradient descent optimizer.
+# 让我们看看当我们运行一个训练批次时，情况会有什么变化。我们使用我们的 ``prediction`` 和 ``ideal_output`` 之间的欧氏距离的平方作为损失函数，
+# 并且我们将使用一个基本的随机梯度下降优化器。
 # 
 
 optimizer = torch.optim.SGD(model.parameters(), lr=0.001)
@@ -296,7 +234,7 @@ print(loss)
 
 
 ######################################################################
-# Now, let’s call ``loss.backward()`` and see what happens:
+# 现在我们调用 ``loss.backward()`` 并且看看发生了什么：
 # 
 
 loss.backward()
@@ -305,10 +243,8 @@ print(model.layer2.weight.grad[0][0:10])
 
 
 ########################################################################
-# We can see that the gradients have been computed for each learning
-# weight, but the weights remain unchanged, because we haven’t run the
-# optimizer yet. The optimizer is responsible for updating model weights
-# based on the computed gradients.
+# 我们可以看到，每个学习权重的梯度已经计算出来了，但是权重仍然没有变化，因为我们还没有运行优化器。
+# 优化器负责根据计算的梯度更新模型权重。.
 # 
 
 optimizer.step()
@@ -317,12 +253,10 @@ print(model.layer2.weight.grad[0][0:10])
 
 
 ######################################################################
-# You should see that ``layer2``\ ’s weights have changed.
-# 
-# One important thing about the process: After calling
-# ``optimizer.step()``, you need to call ``optimizer.zero_grad()``, or
-# else every time you run ``loss.backward()``, the gradients on the
-# learning weights will accumulate:
+#你应该看到了 ``layer2`` 的权重发生了变化。
+#
+# 关于这个过程，有一件很重要的事情： 在调用 ``optimizer.step()`` 之后，你需要调用 ``optimizer.zero_grad()`` ，
+# 否则每次运行 ``loss.backward()``时，学习权重上的梯度会累积起来：
 # 
 
 print(model.layer2.weight.grad[0][0:10])
@@ -340,21 +274,15 @@ print(model.layer2.weight.grad[0][0:10])
 
 
 #########################################################################
-# After running the cell above, you should see that after running
-# ``loss.backward()`` multiple times, the magnitudes of most of the
-# gradients will be much larger. Failing to zero the gradients before
-# running your next training batch will cause the gradients to blow up in
-# this manner, causing incorrect and unpredictable learning results.
+# 在运行上述单元后，你应该看到在多次运行 ``loss.backward()`` 后，大多数梯度的量级会大很多。
+# 在运行下一个训练批次之前，如果没有将梯度归零，将导致梯度以这种方式爆炸，造成不正确和不可预测的学习结果。
 # 
 # Turning Autograd Off and On
 # ---------------------------
-# 
-# There are situations where you will need fine-grained control over
-# whether autograd is enabled. There are multiple ways to do this,
-# depending on the situation.
-# 
-# The simplest is to change the ``requires_grad`` flag on a tensor
-# directly:
+#
+#在有些情况下，你需要对是否启用自动求导进行细粒度的控制。根据不同的情况，有多种方法可以做到这一点。
+#
+#最简单的是直接改变张量上的 ``requires_grad`` 标志：
 # 
 
 a = torch.ones(2, 3, requires_grad=True)
@@ -369,14 +297,10 @@ print(b2)
 
 
 ##########################################################################
-# In the cell above, we see that ``b1`` has a ``grad_fn`` (i.e., a traced
-# computation history), which is what we expect, since it was derived from
-# a tensor, ``a``, that had autograd turned on. When we turn off autograd
-# explicitly with ``a.requires_grad = False``, computation history is no
-# longer tracked, as we see when we compute ``b2``.
-# 
-# If you only need autograd turned off temporarily, a better way is to use
-# the ``torch.no_grad()``:
+#在上面的单元格中，我们看到 ``b1`` 有一个 ``grad_fn`` （即追踪的计算历史），这是我们所期望的，因为它是从一个打开了自动求导的张量 ``a`` 派生的。
+# 当我们用 ``a.requires_grad = False`` 明确地关闭自动求导时，计算历史就不再被追踪了，正如我们在计算 ``b2`` 后看到的。
+#
+#如果你只需要暂时关闭自动求导，一个更好的方法是使用 ```torch.no_grad()``：
 # 
 
 a = torch.ones(2, 3, requires_grad=True) * 2
@@ -395,7 +319,7 @@ print(c3)
 
 
 ##########################################################################
-# ``torch.no_grad()`` can also be used as a function or method decorator:
+# ``torch.no_grad()`` 也可以作为一个函数或方法修饰器使用：
 # 
 
 def add_tensors1(x, y):
@@ -417,14 +341,10 @@ print(c2)
 
 
 ##########################################################################
-# There’s a corresponding context manager, ``torch.enable_grad()``, for
-# turning autograd on when it isn’t already. It may also be used as a
-# decorator.
-# 
-# Finally, you may have a tensor that requires gradient tracking, but you
-# want a copy that does not. For this we have the ``Tensor`` object’s
-# ``detach()`` method - it creates a copy of the tensor that is *detached*
-# from the computation history:
+# 有一个相应的上下文管理器，``torch.enable_grad()``，当它没有打开的时候，用于打开自动求导。它也可以作为一个修饰器使用。
+#
+# 最后，你可能有一个需要梯度跟踪的 ``Tensor`` ，但你想要一个不执行梯度跟踪的副本。
+# 为此，我们有张量对象的 ``detach()`` 方法，它会创建一个从计算历史中分离出来的张量副本：
 # 
 
 x = torch.rand(5, requires_grad=True)
@@ -435,26 +355,19 @@ print(y)
 
 
 #########################################################################
-# We did this above when we wanted to graph some of our tensors. This is
-# because ``matplotlib`` expects a NumPy array as input, and the implicit
-# conversion from a PyTorch tensor to a NumPy array is not enabled for
-# tensors with requires_grad=True. Making a detached copy lets us move
-# forward.
+#正如我们上面所做的，当我们想对一些张量进行绘图时。
+# 因为 ``matplotlib`` 希望一个NumPy数组作为输入，而对于 `requires_grad=True` 的张量来说，
+# 从PyTorch张量到NumPy数组的隐式转换并没有启用。使用一个分离的副本可以让我们的方法得以正确执行。
 # 
 # Autograd and In-place Operations
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 
-# In every example in this notebook so far, we’ve used variables to
-# capture the intermediate values of a computation. Autograd needs these
-# intermediate values to perform gradient computations. *For this reason,
-# you must be careful about using in-place operations when using
-# autograd.* Doing so can destroy information you need to compute
-# derivatives in the ``backward()`` call. PyTorch will even stop you if
-# you attempt an in-place operation on leaf variable that requires
-# autograd, as shown below.
+#
+# 到目前为止，在这个笔记本的每个例子中，我们都使用了变量来捕捉计算的中间值。自动求导需要这些中间值来进行梯度计算。
+# 出于这个原因，在使用自动求导时，你必须谨慎使用原地操作。这样做会破坏你在 ``backward()`` 调用中计算导数所需的信息。
+# 如果你试图对需要自动求导的叶子变量进行原地操作，PyTorch甚至会阻止你，如下所示。
 # 
 # .. note::
-#     The following code cell throws a runtime error. This is expected.
+#     下面的代码会抛出一个runtime error.这是意料之中的。
 # 
 # ::
 #
@@ -465,11 +378,9 @@ print(y)
 #########################################################################
 # Autograd Profiler
 # -----------------
-# 
-# Autograd tracks every step of your computation in detail. Such a
-# computation history, combined with timing information, would make a
-# handy profiler - and autograd has that feature baked in. Here’s a quick
-# example usage:
+# 自动求导详细地跟踪你的每一步计算。
+# 这样的计算历史，结合时间信息，将成为一个方便的剖析器--而自动求导已经将这个功能内置于其中。
+# 下面是一个快速使用的例子：
 # 
 
 device = torch.device('cpu')
@@ -490,18 +401,13 @@ print(prf.key_averages().table(sort_by='self_cpu_time_total'))
 
 
 ##########################################################################
-# The profiler can also label individual sub-blocks of code, break out the
-# data by input tensor shape, and export data as a Chrome tracing tools
-# file. For full details of the API, see the
-# `documentation <https://pytorch.org/docs/stable/autograd.html#profiler>`__.
+# 剖析器还可以标记代码的单个子块，按输入张量形状划分数据，并将数据导出为Chrome追踪工具文件。有关API的全部细节，请参见
+# `文档 <https://pytorch.org/docs/stable/autograd.html#profiler>`__.
 # 
 # Advanced Topic: More Autograd Detail and the High-Level API
 # -----------------------------------------------------------
-# 
-# If you have a function with an n-dimensional input and m-dimensional
-# output, :math:`\vec{y}=f(\vec{x})`, the complete gradient is a matrix of
-# the derivative of every output with respect to every input, called the
-# *Jacobian:*
+#
+# 如果你有一个具有n维输入和m维输出的函数，:math:`\vec{y}=f(\vec{x})`，完整的梯度是每一个输出相对于每一个输入的导数的矩阵，称为*雅各布（Jacbian）矩阵*：
 # 
 # .. math::
 #
@@ -512,21 +418,14 @@ print(prf.key_averages().table(sort_by='self_cpu_time_total'))
 #      \vdots & \ddots & \vdots\\
 #      \frac{\partial y_{m}}{\partial x_{1}} & \cdots & \frac{\partial y_{m}}{\partial x_{n}}
 #      \end{array}\right)
-# 
-# If you have a second function, :math:`l=g\left(\vec{y}\right)` that
-# takes m-dimensional input (that is, the same dimensionality as the
-# output above), and returns a scalar output, you can express its
-# gradients with respect to :math:`\vec{y}` as a column vector,
-# :math:`v=\left(\begin{array}{ccc}\frac{\partial l}{\partial y_{1}} & \cdots & \frac{\partial l}{\partial y_{m}}\end{array}\right)^{T}`
-# - which is really just a one-column Jacobian.
-# 
-# More concretely, imagine the first function as your PyTorch model (with
-# potentially many inputs and many outputs) and the second function as a
-# loss function (with the model’s output as input, and the loss value as
-# the scalar output).
-# 
-# If we multiply the first function’s Jacobian by the gradient of the
-# second function, and apply the chain rule, we get:
+#
+# 如果你有第二个函数，:math:`l=g\left(\vec{y}\right)` ，它接受m维的输入（即与上述输出相同的维度），并返回一个标量的输出，你可以将其相对于 :math:`\vec{y}` 的梯度表达为一个列向量，
+# :math:`v=\left(\begin{array}{ccc}\frac{\partial l}{\partial y_{1}} & \cdots & \frac{\partial l}{\partial y_{m}}\end{array}\right)^{T}` ，
+# 这实际上只是一个单列的雅各布式。
+#
+#更具体地说，把第一个函数想象成你的PyTorch模型（可能有许多输入和许多输出），第二个函数是一个损失函数（模型的输出是输入，损失值是标量输出）。
+#
+#如果我们将第一个函数的雅各布矩阵乘以第二个函数的梯度，并应用链式法则，我们得到：
 # 
 # .. math::
 #
@@ -544,22 +443,14 @@ print(prf.key_averages().table(sort_by='self_cpu_time_total'))
 #    \frac{\partial l}{\partial x_{n}}
 #    \end{array}\right)
 # 
-# Note: You could also use the equivalent operation :math:`v^{T}\cdot J`,
-# and get back a row vector.
-# 
-# The resulting column vector is the *gradient of the second function with
-# respect to the inputs of the first* - or in the case of our model and
-# loss function, the gradient of the loss with respect to the model
-# inputs.
-# 
-# **``torch.autograd`` is an engine for computing these products.** This
-# is how we accumulate the gradients over the learning weights during the
-# backward pass.
-# 
-# For this reason, the ``backward()`` call can *also* take an optional
-# vector input. This vector represents a set of gradients over the tensor,
-# which are multiplied by the Jacobian of the autograd-traced tensor that
-# precedes it. Let’s try a specific example with a small vector:
+# Note:你也可以使用等价的操作 :math:`v^{T}\cdot J`，并得到一个行向量。
+#
+# 由此产生的列向量是 *第二个函数相对于第一个函数的输入的梯度* ，或者在我们的模型和损失函数的情况下，损失相对于模型输入的梯度。
+#
+# **``torch.autograd`` 是计算这些乘积的引擎。** 这就是我们如何在后向传播中积累学习权重的梯度。
+3
+# 由于这个原因，``backward()`` 调用 *也* 可以接受一个可选的向量输入。
+# 这个向量代表了一组张量上的梯度，它被乘以前面的autograd追踪张量的雅各布矩阵。让我们用一个小的向量试一下具体的例子：
 # 
 
 x = torch.randn(3, requires_grad=True)
@@ -572,11 +463,8 @@ print(y)
 
 
 ##########################################################################
-# If we tried to call ``y.backward()`` now, we’d get a runtime error and a
-# message that gradients can only be *implicitly* computed for scalar
-# outputs. For a multi-dimensional output, autograd expects us to provide
-# gradients for those three outputs that it can multiply into the
-# Jacobian:
+# 如果我们现在试图调用 ``y.backward()``，我们会得到一个运行时错误和一条信息，即梯度只能为标量输出隐式计算。
+# 对于一个多维输出，自动求导希望我们提供这三个输出的梯度，以便它能乘以雅各布矩阵：
 # 
 
 v = torch.tensor([0.1, 1.0, 0.0001], dtype=torch.float) # stand-in for gradients
@@ -586,21 +474,15 @@ print(x.grad)
 
 
 ##########################################################################
-# (Note that the output gradients are all related to powers of two - which
-# we’d expect from a repeated doubling operation.)
+#请注意，输出梯度都与2的幂有关--这也是我们所期望的重复加倍操作）。
 # 
 # The High-Level API
 # ~~~~~~~~~~~~~~~~~~
-# 
-# There is an API on autograd that gives you direct access to important
-# differential matrix and vector operations. In particular, it allows you
-# to calculate the Jacobian and the *Hessian* matrices of a particular
-# function for particular inputs. (The Hessian is like the Jacobian, but
-# expresses all partial *second* derivatives.) It also provides methods
-# for taking vector products with these matrices.
-# 
-# Let’s take the Jacobian of a simple function, evaluated for a 2
-# single-element inputs:
+#
+#autograd上有一个API，让你直接访问重要的微分矩阵和向量操作。特别是，它允许你计算特定输入下的特定函数的Jacobian和 *Hessian矩阵* 。
+# (Hessian与Jacobian相似，但表达了所有的部分二阶导数)。它还提供了与这些矩阵进行矢量乘积的方法。
+#
+#让我们来看看一个简单函数的Jacobian，对2个单元素输入进行评估：
 # 
 
 def exp_adder(x, y):
@@ -612,11 +494,9 @@ torch.autograd.functional.jacobian(exp_adder, inputs)
 
 
 ########################################################################
-# If you look closely, the first output should equal :math:`2e^x` (since
-# the derivative of :math:`e^x` is :math:`e^x`), and the second value
-# should be 3.
-# 
-# You can, of course, do this with higher-order tensors:
+#如果你仔细看，第一个输出应该等于:math:`2e^x（因为 :math:`e^x` 的导数是 :math:`e^x` ），第二个值应该为3。
+#
+#当然，你也可以用高阶张量来做这个：
 # 
 
 inputs = (torch.rand(3), torch.rand(3)) # arguments for the function
@@ -625,12 +505,9 @@ torch.autograd.functional.jacobian(exp_adder, inputs)
 
 
 #########################################################################
-# The ``torch.autograd.functional.hessian()`` method works identically
-# (assuming your function is twice differentiable), but returns a matrix
-# of all second derivatives.
-# 
-# There is also a function to directly compute the vector-Jacobian
-# product, if you provide the vector:
+# ``torch.autograd.functional.hessian()`` 方法的工作原理与此相同（假设你的函数是可二阶导的），但会返回一个所有二阶导数的矩阵。
+#
+#如果你提供了矢量，还有一个函数可以直接计算矢量-雅各比乘积：
 # 
 
 def do_some_doubling(x):
@@ -645,11 +522,9 @@ torch.autograd.functional.vjp(do_some_doubling, inputs, v=my_gradients)
 
 
 ##############################################################################
-# The ``torch.autograd.functional.jvp()`` method performs the same matrix
-# multiplication as ``vjp()`` with the operands reversed. The ``vhp()``
-# and ``hvp()`` methods do the same for a vector-Hessian product.
-# 
-# For more information, including performance notes on the `docs for the
-# functional
-# API <https://pytorch.org/docs/stable/autograd.html#functional-higher-level-api>`__
+# ``torch.autograd.functional.jvp()`` 方法执行与 ``vjp()`` 相同的矩阵乘法，
+# 操作数相反。``vhp()`` 和 ``hvp()`` 方法对vector-Hessian积进行同样的操作。
+#
+#想要了解更多信息，包括性能，请见
+# API文档 <https://pytorch.org/docs/stable/autograd.html#functional-higher-level-api>`__
 # 
