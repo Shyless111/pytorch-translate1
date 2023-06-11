@@ -10,7 +10,7 @@
 Building Models with PyTorch
 ============================
 
-Follow along with the video below or on `youtube <https://www.youtube.com/watch?v=OSqIP-mOWOI>`__.
+本节课可以在youtube上观看。 `youtube <https://www.youtube.com/watch?v=OSqIP-mOWOI>`__.
 
 .. raw:: html
 
@@ -18,28 +18,22 @@ Follow along with the video below or on `youtube <https://www.youtube.com/watch?
      <iframe width="560" height="315" src="https://www.youtube.com/embed/OSqIP-mOWOI" frameborder="0" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
    </div>
 
-``torch.nn.Module`` and ``torch.nn.Parameter``
+``torch.nn.Module`` 和 ``torch.nn.Parameter``
 ----------------------------------------------
 
-In this video, we’ll be discussing some of the tools PyTorch makes
-available for building deep learning networks.
+在视频中我们将要讨论一些用于构建深度学习网络的PyTorch工具。
 
-Except for ``Parameter``, the classes we discuss in this video are all
-subclasses of ``torch.nn.Module``. This is the PyTorch base class meant
-to encapsulate behaviors specific to PyTorch Models and their
-components.
+除了 ``Parameter``，我们在视频中所讨论的类都是 ``torch.nn.Module`` 的子类。 这是PyTorch的基类，封装了特定的PyTorch模型及其组件。
 
-One important behavior of ``torch.nn.Module`` is registering parameters.
-If a particular ``Module`` subclass has learning weights, these weights
-are expressed as instances of ``torch.nn.Parameter``. The ``Parameter``
-class is a subclass of ``torch.Tensor``, with the special behavior that
-when they are assigned as attributes of a ``Module``, they are added to
-the list of that modules parameters. These parameters may be accessed
-through the ``parameters()`` method on the ``Module`` class.
+``torch.nn.Module`` 的一个重要的操作是注册参数。
+如果一个特定的 ``Module`` 子类具有可学习的权重，这些权重会被表达为 ``torch.nn.Parameter`` 的实例。
+``Parameter`` 类是 `torch.Tensor``类具有特殊的行为的子类，当它们被分配为一个模块的属性时，它们会被添加到该模块的参数列表中。
+这些参数可以通过 `Module`` 类的 ``parameters()`` 方法访问。
 
-As a simple example, here’s a very simple model with two linear layers
-and an activation function. We’ll create an instance of it and ask it to
-report on its parameters:
+
+作为一个简单的例子，这里有一个非常简单的模型，有两个线性层和一个激活函数。
+我们将创建它的一个实例，并要求它报告其参数：
+
 
 """
 
@@ -80,23 +74,18 @@ for param in tinymodel.linear2.parameters():
 
 
 #########################################################################
-# This shows the fundamental structure of a PyTorch model: there is an
-# ``__init__()`` method that defines the layers and other components of a
-# model, and a ``forward()`` method where the computation gets done. Note
-# that we can print the model, or any of its submodules, to learn about
-# its structure.
+# 这显示了PyTorch模型的基本结构：有一个 ``__init__()`` 方法来定义模型的层和其他组件，还有一个 ``forward()`` 方法来完成计算。
+# 请注意，我们可以打印该模型或其任何子模块，以了解其结构。
 # 
 # Common Layer Types
 # ------------------
 # 
 # Linear Layers
 # ~~~~~~~~~~~~~
-# 
-# The most basic type of neural network layer is a *linear* or *fully
-# connected* layer. This is a layer where every input influences every
-# output of the layer to a degree specified by the layer’s weights. If a
-# model has *m* inputs and *n* outputs, the weights will be an *m* x *n*
-# matrix. For example:
+#
+# 最基本的神经网络层类型是 *线性* 或 *全连接层* 。
+# 这个层的每个输入都会影响该层的每个输出，其影响程度由该层的权重决定。
+# 如果一个模型有 *m* 个输入和 *n* 个输出，权重将是一个 *m* x *n* 矩阵。比如说：
 # 
 
 lin = torch.nn.Linear(3, 2)
@@ -114,65 +103,56 @@ print(y)
 
 
 #########################################################################
-# If you do the matrix multiplication of ``x`` by the linear layer’s
-# weights, and add the biases, you’ll find that you get the output vector
-# ``y``.
-# 
-# One other important feature to note: When we checked the weights of our
-# layer with ``lin.weight``, it reported itself as a ``Parameter`` (which
-# is a subclass of ``Tensor``), and let us know that it’s tracking
-# gradients with autograd. This is a default behavior for ``Parameter``
-# that differs from ``Tensor``.
-# 
-# Linear layers are used widely in deep learning models. One of the most
-# common places you’ll see them is in classifier models, which will
-# usually have one or more linear layers at the end, where the last layer
-# will have *n* outputs, where *n* is the number of classes the classifier
-# addresses.
+# 如果你用线性层的权重对 ``x`` 进行矩阵乘法，并加上偏置，你会发现你得到了输出向量 ``y``。
+#
+# 还有一个重要的特征需要注意：
+# 当我们用 ``lin.weight`` 检查我们层的权重时，它报告自己是一个 ``Parameter``（这是Tensor的一个子类），并让我们知道它在用autograd追踪梯度。
+# 这是 ``Parameter`` 区别于 ``Tensor`` 的一个默认行为。
+#
+# 线性层在深度学习模型中被广泛使用。
+# 你最常看到它们的地方之一是在分类器模型中，通常会在最后有一个或多个线性层，其中最后一层会有 *n* 个输出，其中 *n* 是分类器处理的类别数量。
 # 
 # Convolutional Layers
 # ~~~~~~~~~~~~~~~~~~~~
+#
+# *卷积层* 是为了处理具有高度空间相关性的数据而建立的。
+# 它们在计算机视觉中非常常用，在那里它们可以检测到紧密的特征分组，并将其组成更高级别的特征。
+# 它们也出现在其他场合--例如，在NLP应用中，一个词的直接上下文（即序列中邻近的其他词）可以影响一个句子的含义。
 # 
-# *Convolutional* layers are built to handle data with a high degree of
-# spatial correlation. They are very commonly used in computer vision,
-# where they detect close groupings of features which the compose into
-# higher-level features. They pop up in other contexts too - for example,
-# in NLP applications, where a word’s immediate context (that is, the
-# other words nearby in the sequence) can affect the meaning of a
-# sentence.
-# 
-# We saw convolutional layers in action in LeNet5 in an earlier video:
+# 我们在之前的视频中看到了卷积层在LeNet5中的作用：
 # 
 
 import torch.functional as F
 
+import torch.functional as F
+import torch.nn as nn
 
-class LeNet(torch.nn.Module):
+
+class LeNet(nn.Module):
 
     def __init__(self):
         super(LeNet, self).__init__()
-        # 1 input image channel (black & white), 6 output channels, 5x5 square convolution
-        # kernel
-        self.conv1 = torch.nn.Conv2d(1, 6, 5)
-        self.conv2 = torch.nn.Conv2d(6, 16, 3)
-        # an affine operation: y = Wx + b
-        self.fc1 = torch.nn.Linear(16 * 6 * 6, 120)  # 6*6 from image dimension
-        self.fc2 = torch.nn.Linear(120, 84)
-        self.fc3 = torch.nn.Linear(84, 10)
+        # 1个输入图像通道（黑色和白色），6个输出通道，5x5正方形卷积核
+        self.conv1 = nn.Conv2d(1, 6, 5)
+        self.conv2 = nn.Conv2d(6, 16, 5)
+        # 一个仿射（线性）运算： y = Wx + b
+        self.fc1 = nn.Linear(16 * 5 * 5, 120)  # 5*5是图像尺寸
+        self.fc2 = nn.Linear(120, 84)
+        self.fc3 = nn.Linear(84, 10)
 
     def forward(self, x):
-        # Max pooling over a (2, 2) window
+        # 在一个(2, 2)窗口上的最大池化
         x = F.max_pool2d(F.relu(self.conv1(x)), (2, 2))
-        # If the size is a square you can only specify a single number
+        # 如果尺寸是一个平方数，你只能指定一个数字
         x = F.max_pool2d(F.relu(self.conv2(x)), 2)
-        x = x.view(-1, self.num_flat_features(x))
-        x = F.relu(self.fc1(x))
+        x = x.view(-1, self.num_flat_features(x))  # 改变x的形状变为（batch, 其他所有维度相乘）
+        x = F.relu(self.fc1(x))  # relu 是一个激活函数
         x = F.relu(self.fc2(x))
         x = self.fc3(x)
         return x
 
     def num_flat_features(self, x):
-        size = x.size()[1:]  # all dimensions except the batch dimension
+        size = x.size()[1:]  # size拿到了除批量维度（batch)外x的所有维度
         num_features = 1
         for s in size:
             num_features *= s
@@ -180,70 +160,36 @@ class LeNet(torch.nn.Module):
 
 
 ##########################################################################
-# Let’s break down what’s happening in the convolutional layers of this
-# model. Starting with ``conv1``:
+# 让我们分解模型中的卷积层看看其中发生了什么，我们从 ``conv1`` 开始：
 # 
-# -  LeNet5 is meant to take in a 1x32x32 black & white image. **The first
-#    argument to a convolutional layer’s constructor is the number of
-#    input channels.** Here, it is 1. If we were building this model to
-#    look at 3-color channels, it would be 3.
-# -  A convolutional layer is like a window that scans over the image,
-#    looking for a pattern it recognizes. These patterns are called
-#    *features,* and one of the parameters of a convolutional layer is the
-#    number of features we would like it to learn. **This is the second
-#    argument to the constructor is the number of output features.** Here,
-#    we’re asking our layer to learn 6 features.
-# -  Just above, I likened the convolutional layer to a window - but how
-#    big is the window? **The third argument is the window or kernel
-#    size.** Here, the “5” means we’ve chosen a 5x5 kernel. (If you want a
-#    kernel with height different from width, you can specify a tuple for
-#    this argument - e.g., ``(3, 5)`` to get a 3x5 convolution kernel.)
-# 
-# The output of a convolutional layer is an *activation map* - a spatial
-# representation of the presence of features in the input tensor.
-# ``conv1`` will give us an output tensor of 6x28x28; 6 is the number of
-# features, and 28 is the height and width of our map. (The 28 comes from
-# the fact that when scanning a 5-pixel window over a 32-pixel row, there
-# are only 28 valid positions.)
-# 
-# We then pass the output of the convolution through a ReLU activation
-# function (more on activation functions later), then through a max
-# pooling layer. The max pooling layer takes features near each other in
-# the activation map and groups them together. It does this by reducing
-# the tensor, merging every 2x2 group of cells in the output into a single
-# cell, and assigning that cell the maximum value of the 4 cells that went
-# into it. This gives us a lower-resolution version of the activation map,
-# with dimensions 6x14x14.
-# 
-# Our next convolutional layer, ``conv2``, expects 6 input channels
-# (corresponding to the 6 features sought by the first layer), has 16
-# output channels, and a 3x3 kernel. It puts out a 16x12x12 activation
-# map, which is again reduced by a max pooling layer to 16x6x6. Prior to
-# passing this output to the linear layers, it is reshaped to a 16 \* 6 \*
-# 6 = 576-element vector for consumption by the next layer.
-# 
-# There are convolutional layers for addressing 1D, 2D, and 3D tensors.
-# There are also many more optional arguments for a conv layer
-# constructor, including stride length(e.g., only scanning every second or
-# every third position) in the input, padding (so you can scan out to the
-# edges of the input), and more. See the
-# `documentation <https://pytorch.org/docs/stable/nn.html#convolution-layers>`__
-# for more information.
+# - LeNet5是为了接收1x32x32的黑白图像。**卷积层构造函数的第一个参数是输入通道的数量。** 这里是1。如果我们建立这个模型是为了观察3个颜色的通道，那么它就是3。
+# - 卷积层就像一个窗口，在图像上扫描，寻找它所识别的模式。这些模式被称为 *特征* ，卷积层的一个参数是我们希望它学习的特征数量。**这是构造函数的第二个参数，是输出特征的数量。** 这里，我们要求这个层学习6个特征。
+# - 在上面，我把卷积层比喻成一个窗口--但这个窗口有多大？ **第三个参数是窗口或核的大小** 。
+#   这里，"5 "意味着我们选择了一个5x5的核。(如果你想要一个高度与宽度不同的核，你可以为这个参数指定一个元组--例如，``(3, 5)``来得到一个3x5的卷积核）。
+#
+# 卷积层的输出是一个 *激活图* --输入张量中特征存在的空间表示。
+# ``conv1`` 会给我们一个6x28x28的输出张量；6是特征的数量，28是我们图的高度和宽度。
+# (28来自于这样一个事实：当在32像素的行上扫描一个5像素的窗口时，只有28个有效位置）。
+#
+# 然后，我们将卷积的输出通过一个ReLU激活函数（后面会有更多关于激活函数的内容），然后通过最大池化（max pooling）层。
+# 最大池化层将激活图中彼此相近的特征集中起来。
+# 它通过减少张量来做到这一点，将输出中的每一个2x2的单元组合并成一个单元，并为该单元分配进入该单元的4个单元的最大值。
+# 这样我们得到了一个低分辨率的激活图，尺寸为6x14x14。
+#
+# 我们的下一个卷积层，``conv2```，期望有6个输入通道（对应于第一层所寻求的6个特征），有16个输出通道和一个3x3卷积核。
+# 它输出了一个16x12x12的激活图，这个激活图又被一个最大池化层减少到16x6x6。
+# 在将这个输出传递给线性层之前，它被重塑为一个16*6*6=576元素的向量，供下一层使用。
+#
+# 有用于处理一维、二维和三维张量的卷积层。卷积层构造函数还有很多可选参数，包括输入中的步长（stride）长度（例如，每二个或每三个位置扫描一次）、填充（以便你可以扫描到输入的边缘）等等。
+# 更多信息请参见`文档 <https://pytorch.org/docs/stable/nn.html#convolution-layers>`__。
 # 
 # Recurrent Layers
 # ~~~~~~~~~~~~~~~~
-# 
-# *Recurrent neural networks* (or *RNNs)* are used for sequential data -
-# anything from time-series measurements from a scientific instrument to
-# natural language sentences to DNA nucleotides. An RNN does this by
-# maintaining a *hidden state* that acts as a sort of memory for what it
-# has seen in the sequence so far.
-# 
-# The internal structure of an RNN layer - or its variants, the LSTM (long
-# short-term memory) and GRU (gated recurrent unit) - is moderately
-# complex and beyond the scope of this video, but we’ll show you what one
-# looks like in action with an LSTM-based part-of-speech tagger (a type of
-# classifier that tells you if a word is a noun, verb, etc.):
+#
+# *循环神经网络*（或称 *RNN）* 用于处理顺序数据--从科学仪器的时间序列测量到自然语言句子到DNA核苷酸的任何东西。
+# 一个RNN通过维护一个 *隐藏的状态* 来实现这一目的，该状态作为一种记忆，用于记忆迄今为止它在序列中所看到的内容。
+#
+# RNN层的内部结构--或其变种LSTM（长短时记忆）和GRU（门控递归单元）--相当复杂，超出了本视频的范围，但我们将向你展示一个基于LSTM的部分语音标记器（一种分类器，告诉你一个词是否是名词、动词等）是什么样的：
 # 
 
 class LSTMTagger(torch.nn.Module):
@@ -270,50 +216,30 @@ class LSTMTagger(torch.nn.Module):
 
 
 ########################################################################
-# The constructor has four arguments:
+# 构建器包含四个参数：
 # 
-# -  ``vocab_size`` is the number of words in the input vocabulary. Each
-#    word is a one-hot vector (or unit vector) in a
-#    ``vocab_size``-dimensional space.
-# -  ``tagset_size`` is the number of tags in the output set.
-# -  ``embedding_dim`` is the size of the *embedding* space for the
-#    vocabulary. An embedding maps a vocabulary onto a low-dimensional
-#    space, where words with similar meanings are close together in the
-#    space.
-# -  ``hidden_dim`` is the size of the LSTM’s memory.
+# -  ``vocab_size`` 是输入词汇中单词的数量。每个词都是 ``vocab_size`` 维度空间中的一个独热（one-hot）向量（或单位向量）。
+# -  ``tagset_size`` 是输出集标签（tags）的数量。
+# -  ``embedding_dim`` embedding_dim是词汇的 *嵌入* 空间的大小。嵌入将词汇映射到一个低维空间上，在这个空间里，具有相似含义的词汇是紧密相连的。
+# -  ``hidden_dim`` 是LSTM的记忆空间的大小。.
+#
+# 输入将是一个句子，其中的单词表示为独热向量的索引。然后，嵌入层将把这些内容映射到一个 ``embedding_dim`` 维的空间。
+# LSTM接受这个嵌入序列并对其进行迭代，得到一个长度为 ``hidden_dim`` 的输出向量。
+# 最后的线性层充当分类器；对最后一层的输出应用 `log_softmax()``，将输出转换为一个标准化的估计概率集，即一个给定的词映射到一个给定的标签。
 # 
-# The input will be a sentence with the words represented as indices of
-# one-hot vectors. The embedding layer will then map these down to an
-# ``embedding_dim``-dimensional space. The LSTM takes this sequence of
-# embeddings and iterates over it, fielding an output vector of length
-# ``hidden_dim``. The final linear layer acts as a classifier; applying
-# ``log_softmax()`` to the output of the final layer converts the output
-# into a normalized set of estimated probabilities that a given word maps
-# to a given tag.
-# 
-# If you’d like to see this network in action, check out the `Sequence
-# Models and LSTM
-# Networks <https://pytorch.org/tutorials/beginner/nlp/sequence_models_tutorial.html>`__
-# tutorial on pytorch.org.
+# 如果你想看看这个网络的运行情况，请查看pytorch.org上的 `Sequence
+# Models 和 LSTM
+# Networks <https://pytorch.org/tutorials/beginner/nlp/sequence_models_tutorial.html>`__。
 # 
 # Transformers
 # ~~~~~~~~~~~~
 # 
-# *Transformers* are multi-purpose networks that have taken over the state
-# of the art in NLP with models like BERT. A discussion of transformer
-# architecture is beyond the scope of this video, but PyTorch has a
-# ``Transformer`` class that allows you to define the overall parameters
-# of a transformer model - the number of attention heads, the number of
-# encoder & decoder layers, dropout and activation functions, etc. (You
-# can even build the BERT model from this single class, with the right
-# parameters!) The ``torch.nn.Transformer`` class also has classes to
-# encapsulate the individual components (``TransformerEncoder``,
-# ``TransformerDecoder``) and subcomponents (``TransformerEncoderLayer``,
-# ``TransformerDecoderLayer``). For details, check out the
-# `documentation <https://pytorch.org/docs/stable/nn.html#transformer-layers>`__
-# on transformer classes, and the relevant
-# `tutorial <https://pytorch.org/tutorials/beginner/transformer_tutorial.html>`__
-# on pytorch.org.
+# *Transformers* 是一种多用途的网络，在NLP领域，带来了像BERT这样十分先进的模型。
+# 对Transformers架构的讨论超出了本视频的范围，但PyTorch有一个 ``Transformer`` 类，
+# 允许你定义Transformer模型的整体参数--注意头的数量、编码器和解码器层的数量、丢弃和激活函数等（只要参数正确，你甚至可以用这个单一的类来建立BERT模型）。
+# ``torch.nn.Transformer`` 类也有类来封装各个组件（``TransformerEncoder``、``TransformerDecoder``）和子组件（``TransformerEncoderLayer``、``TransformerDecoderLayer``）。
+#  详情请查看transformer类的 `文档 <https://pytorch.org/docs/stable/nn.html#transformer-layers>`__ ，
+#  以及pytorch.org上的相关`教程 <https://pytorch.org/tutorials/beginner/transformer_tutorial.html>`__。
 # 
 # Other Layers and Functions
 # --------------------------
@@ -321,12 +247,9 @@ class LSTMTagger(torch.nn.Module):
 # Data Manipulation Layers
 # ~~~~~~~~~~~~~~~~~~~~~~~~
 # 
-# There are other layer types that perform important functions in models,
-# but don’t participate in the learning process themselves.
-# 
-# **Max pooling** (and its twin, min pooling) reduce a tensor by combining
-# cells, and assigning the maximum value of the input cells to the output
-# cell (we saw this). For example:
+# 还有一些层类型在模型中执行重要功能，但本身不参与学习过程。
+#
+# **最大池化（Max pooling）**（以及它的孪生最小池化（min pooling））通过组合单元格来减少张量，并将输入单元格的最大值分配给输出单元格。比如说：
 # 
 
 my_tensor = torch.rand(1, 6, 6)
@@ -337,14 +260,10 @@ print(maxpool_layer(my_tensor))
 
 
 #########################################################################
-# If you look closely at the values above, you’ll see that each of the
-# values in the maxpooled output is the maximum value of each quadrant of
-# the 6x6 input.
-# 
-# **Normalization layers** re-center and normalize the output of one layer
-# before feeding it to another. Centering the and scaling the intermediate
-# tensors has a number of beneficial effects, such as letting you use
-# higher learning rates without exploding/vanishing gradients.
+# 如果你仔细观察上面的数值，你会发现最大池化的输出中的每个数值都是6x6输入的每个象限的最大值。
+#
+# **归一化层（Normalization layers）** 在将一个层的输出送入另一个层之前，对其进行重集中和归一化。
+# 对中间张量进行集中和缩放有很多好处，比如让你使用更高的学习率，而不会出现梯度爆炸/消失。
 # 
 
 my_tensor = torch.rand(1, 4, 4) * 20 + 5
@@ -361,26 +280,16 @@ print(normed_tensor.mean())
 
 
 ##########################################################################
-# Running the cell above, we’ve added a large scaling factor and offset to
-# an input tensor; you should see the input tensor’s ``mean()`` somewhere
-# in the neighborhood of 15. After running it through the normalization
-# layer, you can see that the values are smaller, and grouped around zero
-# - in fact, the mean should be very small (> 1e-8).
-# 
-# This is beneficial because many activation functions (discussed below)
-# have their strongest gradients near 0, but sometimes suffer from
-# vanishing or exploding gradients for inputs that drive them far away
-# from zero. Keeping the data centered around the area of steepest
-# gradient will tend to mean faster, better learning and higher feasible
-# learning rates.
-# 
-# **Dropout layers** are a tool for encouraging *sparse representations*
-# in your model - that is, pushing it to do inference with less data.
-# 
-# Dropout layers work by randomly setting parts of the input tensor
-# *during training* - dropout layers are always turned off for inference.
-# This forces the model to learn against this masked or reduced dataset.
-# For example:
+##%% md 运行上面的单元格，我们给输入张量添加了一个大的缩放因子和偏移量；你应该看到输入张量的 `mean()`` 在15附近。
+# 在通过归一化层运行后，你可以看到数值变小了，并且围绕着零进行分组--事实上，平均值应该非常小（>1e-8）。
+#
+# 这是有好处的，因为许多激活函数（下文将讨论）在0附近有最大的梯度，但有时会因输入远离0而导致梯度消失或爆炸。
+# 保持数据以最陡峭的梯度区域为中心，往往意味着更快、更好的学习和更高的可行的学习率。
+#
+# **丢弃层（Dropout layers）** 是一个鼓励模型中的稀疏表征的工具--也就是说，促使它用更少的数据进行推理。
+#
+# 丢弃层的工作方式是在 *训练期间* 随机设置输入张量的一部分--丢弃层在推理时是关闭的。
+# 这迫使模型针对这个被屏蔽或减少的数据集进行学习。比如说：
 # 
 
 my_tensor = torch.rand(1, 4, 4)
@@ -391,32 +300,23 @@ print(dropout(my_tensor))
 
 
 ##########################################################################
-# Above, you can see the effect of dropout on a sample tensor. You can use
-# the optional ``p`` argument to set the probability of an individual
-# weight dropping out; if you don’t it defaults to 0.5.
+# 上面，你可以看到dropout对样本张量的影响。你可以使用可选的 ``p`` 参数来设置单个权重被丢弃的概率；
+# 如果你不指定，则默认为0.5。
 # 
 # Activation Functions
 # ~~~~~~~~~~~~~~~~~~~~
+#
+# 激活函数使深度学习成为可能。一个神经网络实际上是一个有许多参数的程序，用来 *模拟一个数学函数* 。
+# 如果我们所做的只是通过层权重重复多个张量，我们只能模拟 *线性函数* ；
+# 此外，拥有许多层也没有意义，因为整个网络将减少可以简化为一个单一的矩阵乘法。
+# 在层之间插入 *非线性* 激活函数，才能让深度学习模型模拟任何函数，而不仅仅是线性函数。
 # 
-# Activation functions make deep learning possible. A neural network is
-# really a program - with many parameters - that *simulates a mathematical
-# function*. If all we did was multiple tensors by layer weights
-# repeatedly, we could only simulate *linear functions;* further, there
-# would be no point to having many layers, as the whole network would
-# reduce could be reduced to a single matrix multiplication. Inserting
-# *non-linear* activation functions between layers is what allows a deep
-# learning model to simulate any function, rather than just linear ones.
-# 
-# ``torch.nn.Module`` has objects encapsulating all of the major
-# activation functions including ReLU and its many variants, Tanh,
-# Hardtanh, sigmoid, and more. It also includes other functions, such as
-# Softmax, that are most useful at the output stage of a model.
+# ``torch.nn.Module`` 有封装所有主要激活函数的对象，包括ReLU及其许多变体、Tanh、Hardtanh、sigmoid等。
+# 它还包括其他函数，如Softmax，这些函数在模型的输出阶段最为有用。
 # 
 # Loss Functions
 # ~~~~~~~~~~~~~~
-# 
-# Loss functions tell us how far a model’s prediction is from the correct
-# answer. PyTorch contains a variety of loss functions, including common
-# MSE (mean squared error = L2 norm), Cross Entropy Loss and Negative
-# Likelihood Loss (useful for classifiers), and others.
+#
+# 损失函数告诉我们一个模型的预测离正确答案有多远。
+# PyTorch包含各种损失函数，包括常见的MSE（均方误差=L2范数）、交叉熵损失和负似然损失（对分类器很有用），以及其他函数。
 # 
